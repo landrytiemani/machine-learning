@@ -1,0 +1,167 @@
+=========================================================================
+Log Path: ./log/log_2022-06-18_2022-06-18 23_30_17.log
+Program Path: C:/Users/owner/OneDrive/Documents/MS Analytics_HU/ANLY 530-51- B-2022Summer - Prin and Appl of Machine Learning/SampleProject/main.R
+Working Directory: C:/Users/owner/OneDrive/Documents/MS Analytics_HU/ANLY 530-51- B-2022Summer - Prin and Appl of Machine Learning/SampleProject
+User Name: owner
+R Version: 4.1.0 (2021-05-18)
+Machine: DESKTOP-12J9I86 x86-64
+Operating System: Windows 10 x64 build 22000
+Base Packages: stats graphics grDevices utils datasets methods base
+Other Packages: logr_1.3.0 corrplot_0.90 magrittr_2.0.1 mice_3.13.0 readr_2.1.1
+                quantmod_0.4.20 TTR_0.24.3 xts_0.12.1 zoo_1.8-9 caret_6.0-92
+                lattice_0.20-44 ggplot2_3.3.5 
+Log Start Time: 2022-06-18 23:30:17
+=========================================================================
+
+Download data... 
+
+NOTE: Log Print Time:  2022-06-18 23:30:17
+NOTE: Elapsed Time: 0.224401950836182 secs
+
+NULL
+
+NOTE: Log Print Time:  2022-06-18 23:30:17
+NOTE: Elapsed Time: 0.0100100040435791 secs
+
+correlation analysis...
+
+NOTE: Log Print Time:  2022-06-18 23:30:18
+NOTE: Elapsed Time: 0.0548160076141357 secs
+
+             High        Low      Close     Volume
+High    1.0000000  0.9995640  0.9996468 -0.1971382
+Low     0.9995640  1.0000000  0.9996903 -0.2142427
+Close   0.9996468  0.9996903  1.0000000 -0.2071475
+Volume -0.1971382 -0.2142427 -0.2071475  1.0000000
+
+NOTE: Log Print Time:  2022-06-18 23:30:18
+NOTE: Elapsed Time: 0.0299551486968994 secs
+
+added features...
+
+NOTE: Log Print Time:  2022-06-18 23:30:18
+NOTE: Elapsed Time: 0.0508279800415039 secs
+
+NULL
+
+NOTE: Log Print Time:  2022-06-18 23:30:18
+NOTE: Elapsed Time: 0.00558686256408691 secs
+
+Error in loadNamespace(x) : there is no package called ‘outlieR’
+
+Traceback:
+10: stop(cond)
+9: doWithOneRestart(return(expr), restart)
+8: withOneRestart(expr, restarts[[1L]])
+7: withRestarts(stop(cond), retry_loadNamespace = function() NULL)
+6: loadNamespace(x)
+5: data %>% outlieR::impute(flag = NULL, fill = "mean", level = 0.1, 
+       nmax = NULL, side = NULL, crit = "lof", k = 5, metric = "euclidean", 
+       q = 3) at preprocess_data.r#8
+4: eval(ei, envir)
+3: eval(ei, envir)
+2: withVisible(eval(ei, envir))
+1: source("scripts/preprocess_data.r")
+
+NOTE: Log Print Time:  2022-06-18 23:30:20
+NOTE: Elapsed Time: 2.28500199317932 secs
+
+target creation....
+
+NOTE: Log Print Time:  2022-06-18 23:30:20
+NOTE: Elapsed Time: 0.0199489593505859 secs
+
+NULL
+
+NOTE: Log Print Time:  2022-06-18 23:30:20
+NOTE: Elapsed Time: 0.00399613380432129 secs
+
+split data....
+
+NOTE: Log Print Time:  2022-06-18 23:30:20
+NOTE: Elapsed Time: 0.0069730281829834 secs
+
+NULL
+
+NOTE: Log Print Time:  2022-06-18 23:30:20
+NOTE: Elapsed Time: 0.0069890022277832 secs
+
+NULL
+
+NOTE: Log Print Time:  2022-06-18 23:30:20
+NOTE: Elapsed Time: 0.00497889518737793 secs
+
+train/test decision tree....
+
+NOTE: Log Print Time:  2022-06-18 23:30:21
+NOTE: Elapsed Time: 0.664156913757324 secs
+
+Confusion Matrix and Statistics
+
+          Reference
+Prediction buy sell
+      buy   44   51
+      sell  75   81
+                                          
+               Accuracy : 0.498           
+                 95% CI : (0.4345, 0.5616)
+    No Information Rate : 0.5259          
+    P-Value [Acc > NIR] : 0.82847         
+                                          
+                  Kappa : -0.0168         
+                                          
+ Mcnemar's Test P-Value : 0.04046         
+                                          
+              Precision : 0.4632          
+                 Recall : 0.3697          
+                     F1 : 0.4112          
+             Prevalence : 0.4741          
+         Detection Rate : 0.1753          
+   Detection Prevalence : 0.3785          
+      Balanced Accuracy : 0.4917          
+                                          
+       'Positive' Class : buy             
+                                          
+
+NOTE: Log Print Time:  2022-06-18 23:30:21
+NOTE: Elapsed Time: 0.00399017333984375 secs
+
+train/test random forest....
+
+NOTE: Log Print Time:  2022-06-18 23:30:30
+NOTE: Elapsed Time: 9.47976493835449 secs
+
+Confusion Matrix and Statistics
+
+          Reference
+Prediction buy sell
+      buy   48   73
+      sell  71   59
+                                        
+               Accuracy : 0.4263        
+                 95% CI : (0.3643, 0.49)
+    No Information Rate : 0.5259        
+    P-Value [Acc > NIR] : 0.9994        
+                                        
+                  Kappa : -0.1495       
+                                        
+ Mcnemar's Test P-Value : 0.9336        
+                                        
+              Precision : 0.3967        
+                 Recall : 0.4034        
+                     F1 : 0.4000        
+             Prevalence : 0.4741        
+         Detection Rate : 0.1912        
+   Detection Prevalence : 0.4821        
+      Balanced Accuracy : 0.4252        
+                                        
+       'Positive' Class : buy           
+                                        
+
+NOTE: Log Print Time:  2022-06-18 23:30:30
+NOTE: Elapsed Time: 0.00302410125732422 secs
+
+=========================================================================
+Log End Time: 2022-06-18 23:30:30
+Log Elapsed Time: 0 00:00:12
+=========================================================================

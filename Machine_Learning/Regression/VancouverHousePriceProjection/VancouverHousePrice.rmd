@@ -1,0 +1,341 @@
+---
+title: "Vancouver House Pricing"
+author: "Yves Tiemani"
+date: '2022-08-11'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# - [] - Library import---- 
+library(readr)
+library(ggplot2)
+library(knitr)
+#library(tidyverse)
+library(caret)
+library(leaps)
+library(car)
+library(mice)
+library(scales)
+library(RColorBrewer)
+library(plotly)
+library(nortest)
+library(lmtest)
+library(readr)
+library(corrplot)
+library(stringi) 
+library (VIM, quietly = T) 
+library(dplyr) 
+remotes::install_github("rushkin/outlieR")
+library(outlieR)
+library(magrittr)
+library(randomForest)
+library("tidyr")
+
+# - [] - Data import---- 
+data = read.csv("Vancouver_House_Price.csv", header=T, na.strings=c("","NA"))
+
+
+# - [] - Data structure & summary---- 
+str(data)
+summary(data)
+
+# - [] - Extraction of sold year from sold date.---- 
+data$SOLD.YEAR = as.integer(stri_sub(data$SOLD.DATE,-4))
+
+# - [] - Extraction of street name from address----
+data$STREET.NAME = factor(sub("^\\S+\\s+", '', data$ADDRESS))
+
+# - [] - Subset Ignoble Variables and categorical variable to factor ---- 
+drop = c("SOLD.DATE", "ADDRESS","ï..SALE.TYPE", "URL..SEE.https...www.redfin.com.buy.a.home.comparative.market.analysis.FOR.INFO.ON.PRICING.", "SOURCE", "MLS.", "FAVORITE", "INTERESTED", "NEXT.OPEN.HOUSE.START.TIME", "NEXT.OPEN.HOUSE.END.TIME", "DAYS.ON.MARKET", "STATUS")
+data = data[,!(names(data) %in% drop)]
+print(str (data))
+summary(data)
+
+## Categorical variables to factor
+data$PROPERTY.TYPE = factor (data$PROPERTY.TYPE)
+data$CITY = factor(data$CITY)
+data$STATE.OR.PROVINCE = factor(data$STATE.OR.PROVINCE)
+data$ZIP.OR.POSTAL.CODE = factor (data$ZIP.OR.POSTAL.CODE)
+data$LOCATION = factor(data$LOCATION)
+
+
+# - [] - Impute Missing NA Values ----
+
+##Visualizing missing data
+
+aggr(data,numbers=T, cex.axis=.3, cex.numbers=0.3)
+
+##Check the percentage of missing data we have on our data
+percentmiss = function(x){ sum(is.na(x))/length(x) * 100 }
+missing = apply(data, 2, percentmiss)
+print(missing)
+
+#Exclusion of categorical data for imputation
+replace_columns=data[ , -c(1,2,3,4,8,17)]
+noreplace_columns=data[ , c(1,2,3,4,8,17)]
+
+
+##impute Missing data
+missing = replace_columns %>% mice::mice(m=5,maxit=50,meth="sample",seed=500,print = FALSE)
+missing <- mice::complete(missing, action=as.numeric(2))
+nomiss = na.omit(missing)
+
+##Combine together
+data= cbind(noreplace_columns, nomiss)
+print(str(data))
+summary(data)
+
+##Visualizing missing data after imputation
+aggr(data,numbers=T, cex.axis=.3, cex.numbers=0.3)
+
+
+
+##Check the percentage of missing data we have on our data after impuation
+percentmiss = function(x){ sum(is.na(x))/length(x) * 100 }
+missing = apply(data, 2, percentmiss)
+print(missing)
+
+
+##write the new dataset
+write.csv(data, "C:/Users/owner/OneDrive/Documents/MS Analytics_HU/ANLY 525-90- O-2022Summer - Quantitative Decision Making/Project/Program/data/nomiss_data.csv")
+
+
+
+# - [] - Impute Outliers ----
+
+
+
+#Before outliers imputation
+par(mfrow = c(3, 4))
+boxplot(data$PRICE, breaks = 20, main = "PRICE", border="darkorange", col="dodgerblue")
+boxplot(data$BEDS, breaks = 20, main = "BEDS", border="darkorange", col="dodgerblue")
+boxplot(data$BATHS, breaks = 20, main = "BATHS", border="darkorange", col="dodgerblue")
+boxplot(data$SQUARE.FEET, breaks = 20, main = "SQRFT", border="darkorange", col="dodgerblue")
+boxplot(data$LOT.SIZE, breaks = 20, main = "LOT SIZE", border="darkorange", col="dodgerblue")
+boxplot(data$YEAR.BUILT, breaks = 20, main = "YEAR BUILT", border="darkorange", col="dodgerblue")
+boxplot(data$X..SQUARE.FEET, breaks = 20, main = "$/SQRTFT", border="darkorange", col="dodgerblue")
+boxplot(data$HOA.MONTH, breaks = 20, main = "HOA", border="darkorange", col="dodgerblue")
+boxplot(data$LATITUDE, breaks = 20, main = "LATITUDE", border="darkorange", col="dodgerblue")
+boxplot(data$LONGITUDE, breaks = 20, main = "LONGITUDE", border="darkorange", col="dodgerblue")
+boxplot(data$SOLD.YEAR, breaks = 20, main = "YEAR SOLD", border="darkorange", col="dodgerblue")
+
+
+##outlier detection and normalizing
+outlier_norm <- function(x){
+   qntile <- quantile(x, probs=c(.25, .75))
+   caps <- quantile(x, probs=c(.05, .95))
+   H <- 1.5 * IQR(x, na.rm = T)
+   x[x < (qntile[1] - H)] <- caps[1]
+   x[x > (qntile[2] + H)] <- caps[2]
+   return(x)
+}
+data$PRICE=outlier_norm(data$PRICE)
+data$BEDS=outlier_norm(data$BEDS)
+data$BATHS=outlier_norm(data$BATHS)
+data$SQUARE.FEET=outlier_norm(data$SQUARE.FEET)
+data$LOT.SIZE=outlier_norm(data$LOT.SIZE)
+data$YEAR.BUILT=outlier_norm(data$YEAR.BUILT)
+data$X..SQUARE.FEET=outlier_norm(data$X..SQUARE.FEET)
+data$HOA.MONTH=outlier_norm(data$HOA.MONTH)
+data$LATITUDE=outlier_norm(data$LATITUDE)
+data$LONGITUDE=outlier_norm(data$LONGITUDE)
+data$SOLD.YEAR=outlier_norm(data$SOLD.YEAR)
+
+#After outliers imputation boxplot
+par(mfrow = c(3, 4))
+boxplot(data$PRICE, breaks = 20, main = "PRICE", border="darkorange", col="dodgerblue")
+boxplot(data$BEDS, breaks = 20, main = "BEDS", border="darkorange", col="dodgerblue")
+boxplot(data$BATHS, breaks = 20, main = "BATHS", border="darkorange", col="dodgerblue")
+boxplot(data$SQUARE.FEET, breaks = 20, main = "SQRFT", border="darkorange", col="dodgerblue")
+boxplot(data$LOT.SIZE, breaks = 20, main = "LOT SIZE", border="darkorange", col="dodgerblue")
+boxplot(data$YEAR.BUILT, breaks = 20, main = "YEAR BUILT", border="darkorange", col="dodgerblue")
+boxplot(data$X..SQUARE.FEET, breaks = 20, main = "$/SQRTFT", border="darkorange", col="dodgerblue")
+boxplot(data$HOA.MONTH, breaks = 20, main = "HOA", border="darkorange", col="dodgerblue")
+boxplot(data$LATITUDE, breaks = 20, main = "LATITUDE", border="darkorange", col="dodgerblue")
+boxplot(data$LONGITUDE, breaks = 20, main = "LONGITUDE", border="darkorange", col="dodgerblue")
+boxplot(data$SOLD.YEAR, breaks = 20, main = "YEAR SOLD", border="darkorange", col="dodgerblue")
+
+
+
+data$SQUARE.FEET = as.numeric(data$SQUARE.FEET)
+print(str(data))
+summary(data)
+
+#Drop remaining NA
+data %>% drop_na()
+
+
+# - [] - EDA ----
+
+##Histogram for numeric variables
+par(mfrow = c(3, 4))
+hist(data$PRICE, breaks = 20, main = "PRICE", border="darkorange", col="dodgerblue")
+hist(data$BEDS, breaks = 20, main = "BEDS", border="darkorange", col="dodgerblue")
+hist(data$BATHS, breaks = 20, main = "BATHS", border="darkorange", col="dodgerblue")
+hist(data$SQUARE.FEET, breaks = 20, main = "SQRFT", border="darkorange", col="dodgerblue")
+hist(data$LOT.SIZE, breaks = 20, main = "LOT SIZE", border="darkorange", col="dodgerblue")
+hist(data$YEAR.BUILT, breaks = 20, main = "YEAR BUILT", border="darkorange", col="dodgerblue")
+hist(data$X..SQUARE.FEET, breaks = 20, main = "$/SQRTFT", border="darkorange", col="dodgerblue")
+hist(data$HOA.MONTH, breaks = 20, main = "HOA", border="darkorange", col="dodgerblue")
+hist(data$LATITUDE, breaks = 20, main = "LATITUDE", border="darkorange", col="dodgerblue")
+hist(data$LONGITUDE, breaks = 20, main = "LONGITUDE", border="darkorange", col="dodgerblue")
+hist(data$SOLD.YEAR, breaks = 20, main = "YEAR SOLD", border="darkorange", col="dodgerblue")
+
+
+#Take a look at the pairs to understand the relationship btw all variables
+pairs(data, col = "dodgerblue", cex.labels=0.4)
+
+
+#Corplot for relation between numeric variables
+corrplot(cor(data[, -c(1:6)]), addCoef.col = 1,    # Change font size of correlation coefficients
+         number.cex = 0.5)
+
+#Take a look on correlations between numeric variables
+data_nc = data[, -c(1:6)]
+corrmatrix = cor(data_nc)
+kable(t(corrmatrix))
+
+library(ggcorrplot)
+model.matrix(~0+., data=data[,-c(2,3)]) %>% 
+  cor(use="pairwise.complete.obs") %>% 
+  ggcorrplot(show.diag = F, type="lower", lab=TRUE, lab_size=2)
+
+
+
+
+#No predictors standing out as highly correlated.
+
+
+#Let's take a look on price distribution on spacial parameters
+while (!is.null(dev.list()))  dev.off()
+#dev.off()
+plot_map = ggplot(data, 
+                  aes(x = LONGITUDE, y = LATITUDE, color = PRICE)) +
+  geom_point(aes(size = SQUARE.FEET), alpha = 0.4) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("Data Map - Longtitude vs Latitude and Sqrt Feet") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_distiller(palette = "Paired", labels = comma) +
+  labs(color = "PRICE (in $USD)", size = "SQRT FEET")
+plot_map
+
+#We see houses close to columbia river (at the edge) tend to have higher price than other inland. So longitude and lattitude will likely play a large role predicting house pricing.
+
+#Percentage of observations over than 750K
+sum(data$PRICE>750000)/length(data$PRICE)
+
+
+
+# - [] - Models----
+
+##We will train 3 models, then we will compare them
+
+
+## Data split 75/25 using the randomization seed of 12345
+set.seed(12345)
+data_rand <- data[order(runif(3000)), ]
+data_train <- data_rand[1:2250, ]
+data_test <- data_rand[2251:3000, ]
+
+## Let's check if the randomization affected my data distribution between train and test datasets
+prop.table(table(data_train$BEDS))
+prop.table(table(data_test$BEDS))  #Randomization did not affect our data distribution
+
+##Setup the test harnesses
+control <- trainControl(method="cv", number=10)
+metric <- "RMSE"
+
+##Train linear model 
+fit.lm <- train(PRICE~., data = data_train[,-c(2,3)], method="lm", metric=metric, trControl=control, na.action=na.exclude)
+fit.lm
+
+##Evaluating model performance
+predictedValues<-predict(fit.lm, data_test)
+data_test_nomiss = data_test %>% drop_na()
+modelvalues<-data.frame(obs = data_test_nomiss$PRICE, pred=predictedValues)
+postResample(pred = predictedValues, obs = data_test_nomiss$PRICE)
+
+##capture the variable importance
+vi = varImp(fit.lm, scale = FALSE)
+plot(vi, top = ncol(data)-1)
+
+##Train random forest
+fit.rf <- train(PRICE~., data = data_train[,-c(2,3)], method="rf", metric=metric, trControl=control, na.action=na.exclude)
+fit.rf
+
+##Evaluating model performance
+predictedValues<-predict(fit.rf, data_test)
+data_test_nomiss = data_test %>% drop_na()
+modelvalues<-data.frame(obs = data_test_nomiss$PRICE, pred=predictedValues)
+postResample(pred = predictedValues, obs = data_test_nomiss$PRICE)
+
+##capture the variable importance
+vi = varImp(fit.rf, scale = FALSE)
+plot(vi, top = ncol(data)-1)
+
+
+##Train Decision tree
+fit.rpart <- train(PRICE~., data = data_train[,-c(2,3)], method="rpart", metric=metric, trControl=control, na.action=na.exclude)
+fit.rpart
+
+##Evaluating model performance
+predictedValues<-predict(fit.rpart, data_test)
+data_test_nomiss = data_test %>% drop_na()
+modelvalues<-data.frame(obs = data_test_nomiss$PRICE, pred=predictedValues)
+postResample(pred = predictedValues, obs = data_test_nomiss$PRICE)
+
+##capture the variable importance
+vi = varImp(fit.rpart, scale = FALSE)
+plot(vi, top = ncol(data)-1)
+
+##Train SVM with SVMLinear
+fit.LM <- train(PRICE~., data = data_train[,-c(2,3)], method = "svmLinear", trControl=control, metric=metric, na.action=na.exclude)
+fit.LM
+
+##Evaluating model performance
+predictedValues<-predict(fit.LM, data_test)
+data_test_nomiss = data_test %>% drop_na()
+modelvalues<-data.frame(obs = data_test_nomiss$PRICE, pred=predictedValues)
+postResample(pred = predictedValues, obs = data_test_nomiss$PRICE)
+
+##capture the variable importance
+vi = varImp(fit.LM, scale = FALSE)
+plot(vi, top = ncol(data)-1)
+
+##Train SVM with SVMRadial
+fit.svmRadial <- train(PRICE~., data = data_train[,-c(2,3)], method = "svmRadial", trControl=control, metric=metric, na.action=na.exclude)
+fit.svmRadial
+
+##Evaluating model performance
+predictedValues<-predict(fit.svmRadial, data_test)
+data_test_nomiss = data_test %>% drop_na()
+modelvalues<-data.frame(obs = data_test_nomiss$PRICE, pred=predictedValues)
+postResample(pred = predictedValues, obs = data_test_nomiss$PRICE)
+
+##capture the variable importance
+vi = varImp(fit.svmRadial, scale = FALSE)
+plot(vi, top = ncol(data)-1)
+
+
+##Train SVM with SVMRadial
+fit.svmPoly <- train(PRICE~., data = data_train[,-c(2,3)], method = "svmPoly", trControl=control, metric=metric, na.action=na.exclude)
+fit.svmPoly
+
+##Evaluating model performance
+predictedValues<-predict(fit.svmPoly, data_test)
+data_test_nomiss = data_test %>% drop_na()
+modelvalues<-data.frame(obs = data_test_nomiss$PRICE, pred=predictedValues)
+postResample(pred = predictedValues, obs = data_test_nomiss$PRICE)
+
+##capture the variable importance
+vi = varImp(fit.svmPoly, scale = FALSE)
+plot(vi, top = ncol(data)-1)
+```
+
+

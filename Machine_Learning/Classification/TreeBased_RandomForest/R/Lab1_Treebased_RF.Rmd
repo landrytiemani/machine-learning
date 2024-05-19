@@ -1,0 +1,308 @@
+---
+title: 'Laboratory #1 Classification'
+author: "yves"
+date: '2022-06-20'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Method #1. Tree-based classification
+
+##Step 1: Collecting the data
+
+```{r}
+#Data import
+credit <- read.csv("credit.csv")
+
+#Data structure
+str(credit)
+```
+##Step 2: Exploring the data & Data split
+
+```{r}
+#Data summary
+summary(credit$Credit.Amount)
+
+#Let's e|plore creditability
+credit$Creditability=factor(credit$Creditability, levels =c(0,1), labels=c("No", "Yes"))
+table(credit$Creditability)
+
+#Observation randomisation
+set.seed(12345)
+credit_rand <- credit[order(runif(1000)), ]
+
+#Data summary to see if randomisation didn't change the data
+summary(credit$Credit.Amount) #No change on dataset
+
+#Data split (90/10 split)
+credit_train <- credit_rand[1:900, ]
+credit_test <- credit_rand[901:1000, ]
+
+#Percentage check on train and test data
+prop.table(table(credit_train$ Creditability))
+prop.table(table(credit_test$ Creditability))
+
+
+```
+
+##Step3: Training a model on the data
+
+```{r}
+#Import library
+library(C50)
+
+#Build model
+credit_model <- C5.0(x = credit_train[-1], y = credit_train$Creditability)
+credit_model
+
+```
+
+##Step4: Evaluationg Model Performance
+
+```{r}
+#Import library
+library(gmodels)
+
+#Confusion table
+cred_pred <- predict(credit_model, credit_test)
+CrossTable(credit_test$Creditability, cred_pred, prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE, dnn = c(
+'Actual Creditability', 'Predicted Creditability'))
+
+```
+Q1: 100 % accuracy is mostly unlikely and could be related to multiple errors:
+a. A low number of observations used as training
+b. A high correlation between predictors among them as well as with dependent variables
+c. Randomization was not done well so training or/and test data are not representative of our population
+d. Training data is overfit
+
+
+# Method #2. Random forest
+
+##Step1: Training a model on the data
+
+```{r}
+#Import library
+library(randomForest)
+
+#Build model
+credit_train$Creditability <- as.factor(credit_train$Creditability)
+random_model <- randomForest(Creditability ~ . , data= credit_train)
+summary(random_model)
+```
+
+##Step2: Evaluationg Model Performance
+
+```{r}
+#Model evaluation
+cred_pred <- predict(random_model, credit_test)
+p <- table(cred_pred, credit_test$Creditability)
+p
+
+#Model accuracy
+Accuracy <- sum(diag(p))/sum(p)*100
+Accuracy
+
+```
+##Step3: Three most important features in this model
+```{r}
+#Plot the Variable Importance
+varImpPlot(random_model)
+```
+Q2: The 3 most important features in this model are: Credit Amount, Account Balance an Duration of Credit..month
+
+##Step4 Random seed change to 23458 and Model build, evaluation and accuracy
+```{r}
+#Observation randomisation
+set.seed(23458)
+credit_rand <- credit[order(runif(1000)), ]
+
+#Data summary to see if randomisation didn't change the data
+summary(credit$Credit.Amount) #No change on dataset
+
+#Data split (90/10 split)
+credit_train <- credit_rand[1:900, ]
+credit_test <- credit_rand[901:1000, ]
+
+#Percentage check on train and test data
+prop.table(table(credit_train$ Creditability))
+prop.table(table(credit_test$ Creditability))
+
+#Model build
+credit_train$Creditability <- as.factor(credit_train$Creditability)
+random_model <- randomForest(Creditability ~ . , data= credit_train)
+summary(random_model)
+
+#Model evaluation
+cred_pred <- predict(random_model, credit_test)
+p <- table(cred_pred, credit_test$Creditability)
+p
+
+#Model accuracy
+Accuracy <- sum(diag(p))/sum(p)*100
+Accuracy
+
+```
+The new accuracy with random seed equals to 23458 is 75%.
+
+#Method #3. Adding regression to trees
+
+##Step1: Collecting data
+```{r}
+#Data import
+wine <- read.csv("whitewines.csv")
+str(wine)
+
+```
+
+##Step2: Exploring and Preparing the Data
+```{r}
+#Class variable distribution check
+hist(wine$quality) #The distribution of wine$quality looks normal
+
+# Data split (75/25)
+wine_train <- wine[1:3750, ]
+wine_test <- wine[3751:4898, ]
+```
+
+##Step 3: Training a Model on the Data
+```{r}
+#Data import
+library(rpart)
+library(rpart.plot)
+
+#Model build
+m.rpart <- rpart(quality ~ ., data=wine_train)
+m.rpart
+
+#Tree plots
+ rpart.plot(m.rpart, digits=3)
+ rpart.plot(m.rpart, digits=4, fallen.leaves = TRUE, type = 3, extra = 101)
+ 
+
+```
+
+##Step 4: Evaluating Model Performance
+```{r}
+#Check model's performance using summary
+p.rpart<- predict(m.rpart, wine_test)
+summary(p.rpart)
+summary(wine_test$quality) #Model range smaller due to the fact that it doesn't capture extremes of range of quality (very good or very bad wine)
+
+#Correlation check
+cor(p.rpart, wine_test$quality) #54% is not great.
+
+#RMSE 
+library(caret)
+postResample(pred = p.rpart, obs= wine_test$quality)
+#RMSE equals to 0.7448093
+
+```
+Q3: The RMSE represents the Machine Learning error on predictions. That been said, in our example, the RMSE equals 0.74. This means the wine quality prediction is off by 0.74. Since the range is 6 (from 3 to 9), the error percentage is about 12.33%
+
+#Method #4. News Popularity
+
+#Step #1: Collecting the Data
+```{r}
+#Data import
+news <- read.csv("OnlineNewsPopularity_for_R.csv")
+
+#Data structure
+str(news)
+
+```
+##Step 2: Pre-processing
+```{r}
+#Data cleaning
+
+#Let's remove irrelevant variable
+newsShort = data.frame(news$n_tokens_title, news$n_tokens_content, news$n_unique_tokens, news$n_non_stop_words, news$num_hrefs, news$num_imgs, news$num_videos, news$average_token_length, news$num_keywords, news$kw_max_max, news$global_sentiment_polarity, news$avg_positive_polarity, news$title_subjectivity, news$title_sentiment_polarity, news$abs_title_subjectivity, news$abs_title_sentiment_polarity, news$shares)
+
+colnames(newsShort) <- c("n_tokens_title", "n_tokens_content", "n_unique_tokens", "n_non_stop_words", "num_hrefs", "num_imgs", "num_videos", "average_token_length", "num_keywords", "kw_max_max", "global_sentiment_polarity", "avg_positive_polarity", "title_subjectivity", "title_sentiment_polarity", "abs_title_subjectivity", "abs_title_sentiment_polarity", "shares")
+
+
+#Let's build the popularity variable or the target (if shares > 1400, then it is popular or 1. If not then not popular or 0)
+newsShort$popular = rep('na', nrow(newsShort))
+for(i in 1:39644) {
+     if(newsShort$shares[i] >= 1400) {
+         newsShort$popular[i] = "yes"} 
+     else {newsShort$popular[i] = "no"}
+}
+
+newsShort$popular <- as.factor(newsShort$popular)
+
+#Dropping shares variable
+newsShort = newsShort[-17]
+
+
+
+
+
+#Randomize the data and check data integrity afterward
+set.seed(12345)
+news_rand <- newsShort[order(runif(10000)), ]
+
+#Split data into training and test datasets (90/10)
+news_train <- news_rand[1:9000, ]
+news_test <- news_rand[9001:10000, ]
+
+#Check proportion of data after randomization
+prop.table(table(news_train$popular))
+prop.table(table(news_test$popular)) #We have almost equivalent prop in train & test sets
+
+```
+##Step 3: Model training & Evaluate the model (Decision tree)
+```{r}
+#Train the model
+news_model <- C5.0(news_train[-17], news_train$popular)
+summary(news_model)
+
+#Confusion matrix
+news_pred <- predict(news_model, news_test)
+(p <- table(news_pred, news_test$popular))
+
+#Model evaluation
+(Accuracy <- sum(diag(p))/sum(p)*100)  #58.1% Accuracy
+```
+#Step 4: Model training & Evaluate the model (Random Forest)
+```{r}
+#Model build
+news_train$popular <- as.factor(news_train$popular)
+random_model <- randomForest(popular ~ . , data= news_train)
+summary(random_model)
+
+#Model evaluation
+news_pred <- predict(random_model, news_test)
+p <- table(news_pred, news_test$popular)
+p
+
+#Model accuracy
+Accuracy <- sum(diag(p))/sum(p)*100 
+Accuracy #62.2 % Accuracy
+
+#Plot the Variable Importance
+varImpPlot(random_model)
+
+```
+#Step 5: Model training  (regression to trees)
+```{r}
+#Model build
+news_train$popular <- as.factor(news_train$popular)
+m.rpart <- rpart(popular ~ ., data=news_train, method = "class")
+summary(m.rpart)
+
+#Tree plots
+rpart.plot(m.rpart, type=1, extra = 102)
+rpart.plot(m.rpart, digits=4, fallen.leaves = TRUE, type = 3, extra = 101)
+ 
+#Check model's accuracy
+p.rpart<- predict(m.rpart, news_test, type= "class")
+confMat <- table(news_test$popular,p.rpart)
+accuracy <- sum(diag(confMat))/sum(confMat)
+accuracy #58.6% accuracy
+```
+
+

@@ -1,0 +1,365 @@
+---
+title: "Lab#2"
+author: "Yves Tiemani"
+date: '2022-07-27'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#  Naïve Bayes Classifiers, Part 1
+
+## Step#1: Exploring and Preparing the Data
+
+```{r}
+# Data import and structure
+creditData <- read.csv("creditData.csv")
+str(creditData)
+
+# Preprocessing
+
+## Missing values
+sum(is.na(creditData)) #No missing values found
+
+## Convert target variable to categorical
+creditData$Creditability <- as.factor(creditData$Creditability)
+
+## Data split 75/25 using the randomization seed of 12345
+set.seed(12345)
+credit_rand <- creditData[order(runif(1000)), ]
+credit_train <- credit_rand[1:750, ]
+credit_test <- credit_rand[751:1000, ]
+
+## Let's check if the randomization affected my data distribution between train and test datasets
+prop.table(table(credit_train$Creditability))
+prop.table(table(credit_test$Creditability)) #the distribution of both classes preserved for both training and testing datasets.
+
+```
+
+## Step#2:  Training a Model on the Data
+```{r}
+library(naivebayes)
+naive_model <- naive_bayes(Creditability ~ ., data= credit_train)
+naive_model
+
+#My Naïve Bayes Classifier reported 68.53% of training records as credit worthy.
+```
+
+## Step#3: Evaluating model performance
+```{r}
+# Confusion matrix
+(conf_nat <- table(predict(naive_model, credit_test), credit_test$Creditability))
+
+#Accuracy
+(Accuracy <- sum(diag(conf_nat))/sum(conf_nat)*100)
+
+#The model  failed Type I error on 35 observations (predicted false, but actual is true) and Type II error on 22 observations (predicted true but actual is false). And the accuracy is 77.2%
+```
+#  Naïve Bayes Classifiers, Part 2
+
+## Step#1: Exploring and Preparing the Data
+```{r}
+# Find high correlation
+library(caret)
+creditDataScaled <- scale(credit_rand[,2:ncol(credit_rand)], center=TRUE, scale = TRUE)
+m <- cor(creditDataScaled)
+(highlycor <- findCorrelation(m, 0.30))
+
+## Recombination the class variable and data split
+filteredData <- credit_rand[, -(highlycor[4]+1)]
+filteredTraining <- filteredData[1:750, ]
+filteredTest <- filteredData[751:1000, ]
+
+# Let's check if data manipulation above has not affected the distribution between train and test datasets
+prop.table(table(filteredTraining$Creditability))
+prop.table(table(filteredTest$Creditability)) #the distribution of both classes preserved for both training and testing datasets.
+```
+
+## Step#2: Training a Model on the Data
+```{r}
+#Train Model
+nb_model <- naive_bayes(Creditability ~ ., data=filteredTraining)
+nb_model
+```
+## Step#3: Evaluating model performance
+```{r}
+# Confusion matrix
+filteredTestPred <- predict(nb_model, newdata = filteredTest)
+(conf_nat = table(filteredTestPred, filteredTest$Creditability))
+
+#Accuracy
+(Accuracy <- sum(diag(conf_nat))/sum(conf_nat)*100)
+
+#The model  failed Type I error on 23 observations which is higher than the model without filter (22) and Type II error on 34 observations which is slighly lower than the model without filter (35). The accuracy stayed the same at 77.2%. No improvement.
+
+```
+
+# Support Vector Machine, Part 3
+
+## Step#1: Collecting the Data
+
+```{r}
+#Data import and structure
+letters <- read.csv("letterdata.csv") 
+str(letters)
+```
+
+## Step 2: Preparing the Data
+```{r}
+# Missing values
+sum(is.na(letters)) #No missing values found
+
+# Convert target variable to categorical
+letters$letter <- as.factor(letters$letter)
+
+# Data split 90/10
+letters_train <- letters[1:18000, ] 
+letters_test <- letters[18001:20000, ]
+```
+
+## Step 3: Training a Model on the Data
+```{r}
+#Train the model
+library(kernlab)
+letter_classifier <- ksvm(letter ~ ., data = letters_train, kernel = "vanilladot")
+letter_classifier
+#we have an initial training error of 13.35%
+
+#Model summary
+summary(letter_classifier)
+
+```
+## Step#4: Evaluating Model Performance
+```{r}
+#Confusion matrix
+letter_predictions <- predict(letter_classifier, letters_test) 
+(p <- table(letter_predictions,letters_test$letter))
+
+#Clearer evaluation data:
+agreement <- letter_predictions == letters_test$letter
+table(agreement) #The classification was correct in 1,679 out of our 2000 test records.
+
+#Accuracy
+(Accuracy <- sum(diag(p))/sum(p)*100) #The accuracy of this SVM model is 83.95%
+```
+
+## Step#5: Training a Model on the Data and evaluation with Polynomial kernel
+```{r}
+# Train model
+letter_classifier2 <- ksvm(letter ~ ., data = letters_train, kernel = "polydot")
+letter_classifier2 # we have an initial training error of 13.35%
+
+# Model summary
+summary(letter_classifier2)
+
+# Model evaluation
+
+## Confusion matrix
+letter_predictions <- predict(letter_classifier2, letters_test) 
+(p <- table(letter_predictions,letters_test$letter))
+
+## Clearer evaluation data:
+agreement <- letter_predictions == letters_test$letter
+table(agreement) #The classification was correct in 1,680 out of our 2000 test records.
+
+## Accuracy
+(Accuracy <- sum(diag(p))/sum(p)*100) #The accuracy of this SVM model (Polynomial) is 84% and it is slighly higher than the previous SVM (vanilladot), which was 83.95%.
+
+
+```
+## Step#6: Training a Model on the Data and evaluation with RBF
+```{r}
+# Train model
+letter_classifier3 <- ksvm(letter ~ ., data = letters_train, kernel = "rbfdot")
+letter_classifier3 # we have an initial training error of 4.98%
+
+# Model summary
+summary(letter_classifier3)
+
+# Model evaluation
+
+## Confusion matrix
+letter_predictions <- predict(letter_classifier3, letters_test) 
+(p <- table(letter_predictions,letters_test$letter))
+
+## Clearer evaluation data:
+agreement <- letter_predictions == letters_test$letter
+table(agreement) #The classification was correct in 1,867 out of our 2000 test records.
+
+## Accuracy
+(Accuracy <- sum(diag(p))/sum(p)*100) #The accuracy of this SVM model (RBF) is 93.35% and it is higher than the two previous SVM (Vanilladot~83.95% and Polynomial~84%)
+```
+# News popularity, Part 4
+
+## Step #1: Data Preperation
+```{r}
+#Data import
+news <- read.csv("OnlineNewsPopularity_for_R.csv")
+
+#Data structure
+str(news)
+
+#Let's remove irrelevant variable
+newsShort = data.frame(news$n_tokens_title, news$n_tokens_content, news$n_unique_tokens, news$n_non_stop_words, news$num_hrefs, news$num_imgs, news$num_videos, news$average_token_length, news$num_keywords, news$kw_max_max, news$global_sentiment_polarity, news$avg_positive_polarity, news$title_subjectivity, news$title_sentiment_polarity, news$abs_title_subjectivity, news$abs_title_sentiment_polarity, news$shares)
+
+colnames(newsShort) <- c("n_tokens_title", "n_tokens_content", "n_unique_tokens", "n_non_stop_words", "num_hrefs", "num_imgs", "num_videos", "average_token_length", "num_keywords", "kw_max_max", "global_sentiment_polarity", "avg_positive_polarity", "title_subjectivity", "title_sentiment_polarity", "abs_title_subjectivity", "abs_title_sentiment_polarity", "shares")
+
+
+#Let's build the popularity variable or the target (if shares > 1400, then it is popular or 1. If not then not popular or 0)
+newsShort$popular = rep('na', nrow(newsShort))
+for(i in 1:39644) {
+     if(newsShort$shares[i] >= 1400) {
+         newsShort$popular[i] = "yes"} 
+     else {newsShort$popular[i] = "no"}
+}
+newsShort$popular <- as.factor(newsShort$popular)
+
+#Dropping shares
+newsShort <- subset(newsShort, select = -shares)
+
+
+#Randomize the data and check data integrity afterward
+set.seed(12345)
+news_rand <- newsShort[order(runif(10000)), ]
+
+#Split data into training and test datasets (90/10)
+news_train <- news_rand[1:9000, ]
+news_test <- news_rand[9001:10000, ]
+
+#Check proportion of data after randomization
+prop.table(table(news_train$popular))
+prop.table(table(news_test$popular)) #We have almost equivalent proportions in train & test sets
+
+```
+# Step#2: Bayes Model design and model evaluation
+```{r}
+# Train model
+nb_model <- naive_bayes(popular ~ ., data=news_train)
+nb_model #The Naïve Bayes Classifier reported 56.9% of training records as popular.
+
+# Model evaluation
+
+## Confusion matrix
+news_Pred <- predict(nb_model, newdata = news_test)
+(conf_nat <- table(news_Pred, news_test$popular))
+
+## Accuracy
+(Accuracy <- sum(diag(conf_nat))/sum(conf_nat)*100) #The Naïve Bayes classifier has an accuracy of 50.3% with these data.
+
+```
+# Step#3: Bayes Model design with high correlation filter and model evaluation
+```{r}
+# Find high correlation
+library(caret)
+
+newsScaled <- scale(news_rand[,1:ncol(news_rand)-1], center=TRUE, scale = TRUE)
+m <- cor(newsScaled)
+(highlycor <- findCorrelation(m, 0.30))
+
+## Recombination the class variable and data split
+filteredData <- news_rand[, -(highlycor[4]+1)]
+filteredTraining <- filteredData[1:9000, ]
+filteredTest <- filteredData[9001:10000, ]
+
+# Let's check if data manipulation above has not affected the distribution between train and test datasets
+prop.table(table(filteredTraining$popular))
+prop.table(table(filteredTest$popular)) #the distribution of both classes preserved for both training and testing datasets.
+
+# Train model
+nb_model <- naive_bayes(popular ~ ., data=filteredTraining)
+nb_model
+
+# Confusion matrix
+filteredTestPred <- predict(nb_model, newdata = filteredTest)
+(conf_nat = table(filteredTestPred, filteredTest$popular))
+
+#Accuracy
+(Accuracy <- sum(diag(conf_nat))/sum(conf_nat)*100)
+
+#The accuracy dropped at 48.3% from 50.3% with the Naive Bayes Model without filter.
+
+```
+# Step#4: SVM with vanilla kernel and model evaluation
+
+```{r}
+# Train the model
+library(kernlab)
+news_classifier <- ksvm(popular ~ ., data = news_train, kernel = "vanilladot")
+news_classifier
+#we have an initial training error of 43.08%
+
+# Model summary
+summary(news_classifier)
+
+# Model Evaluation
+
+## Confusion matrix
+news_predictions <- predict(news_classifier, news_test) 
+(p <- table(news_predictions,news_test$popular))
+
+## Clearer evaluation data:
+agreement <- news_predictions == news_test$popular
+table(agreement) #The classification was correct in 586 out of our 1000 test records.
+
+## Accuracy
+(Accuracy <- sum(diag(p))/sum(p)*100) #The accuracy of this SVM model with Vanilladot kernel is 58.6%
+
+```
+# Step#5: SVM with Polynomial kernel and model evaluation
+
+```{r}
+# Train the model
+news_classifier2 <- ksvm(popular ~ ., data = news_train, kernel = "polydot")
+news_classifier2
+#we have an initial training error of 43.08%
+
+# Model summary
+summary(news_classifier2)
+
+# Model Evaluation
+
+## Confusion matrix
+news_predictions <- predict(news_classifier2, news_test) 
+(p <- table(news_predictions,news_test$popular))
+
+## Clearer evaluation data:
+agreement <- news_predictions == news_test$popular
+table(agreement) #The classification was correct in 586 out of our 1000 test records.
+
+## Accuracy
+(Accuracy <- sum(diag(p))/sum(p)*100) #The accuracy of this SVM model with polynomial kernel is 58.6%
+
+```
+# Step#6: SVM with KBF kernel and model evaluation
+
+```{r}
+# Train the model
+news_classifier3 <- ksvm(popular ~ ., data = news_train, kernel = "rbfdot")
+news_classifier3
+#we have an initial training error of 38.42%
+
+# Model summary
+summary(news_classifier3)
+
+# Model Evaluation
+
+## Confusion matrix
+news_predictions <- predict(news_classifier3, news_test) 
+(p <- table(news_predictions,news_test$popular))
+
+## Clearer evaluation data:
+agreement <- news_predictions == news_test$popular
+table(agreement) #The classification was correct in 586 out of our 1000 test records.
+
+## Accuracy
+(Accuracy <- sum(diag(p))/sum(p)*100) #The accuracy of this SVM model is 58.6%
+```
+
+# Conclusion
+We built and ran 5 models: Bayes Model with 47.76% accuracy, Bayes Model with high correlation filter with 47.69% accuracy, vanilla kernel SVM with 58.6% accuracy, Polynomial kernel SVM with 58.6% accuracy  and KBF kernel SVM with accuracy of 58.6%
+In lab1, we previously built and ran decision trees with 58.1% accuracy, random forest with 62.2%, regression trees with 58.6% accuracy. So there is no accuracy improvement.
+
+
+

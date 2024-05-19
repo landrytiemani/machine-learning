@@ -1,0 +1,266 @@
+=========================================================================
+Log Path: ./log/log_2022-06-19_2022-06-19 00_00_47.log
+Program Path: C:/Users/owner/OneDrive/Documents/MS Analytics_HU/ANLY 530-51- B-2022Summer - Prin and Appl of Machine Learning/SampleProject/main.R
+Working Directory: C:/Users/owner/OneDrive/Documents/MS Analytics_HU/ANLY 530-51- B-2022Summer - Prin and Appl of Machine Learning/SampleProject
+User Name: owner
+R Version: 4.1.0 (2021-05-18)
+Machine: DESKTOP-12J9I86 x86-64
+Operating System: Windows 10 x64 build 22000
+Base Packages: stats graphics grDevices utils datasets methods base
+Other Packages: logr_1.3.0 corrplot_0.90 magrittr_2.0.1 mice_3.13.0 readr_2.1.1
+                quantmod_0.4.20 TTR_0.24.3 xts_0.12.1 zoo_1.8-9 caret_6.0-92
+                lattice_0.20-44 ggplot2_3.3.5 
+Log Start Time: 2022-06-19 00:00:47
+=========================================================================
+
+Download data... 
+
+NOTE: Log Print Time:  2022-06-19 00:00:47
+NOTE: Elapsed Time: 0.239601850509644 secs
+
+             Open   High    Low  Close  Volume Adjusted
+2017-06-20 957.52 961.62 950.01 950.63 1126000   950.63
+2017-06-21 953.64 960.10 950.76 959.45 1202200   959.45
+2017-06-22 958.70 960.72 954.55 957.09  941400   957.09
+2017-06-23 956.83 966.00 954.20 965.59 1527900   965.59
+2017-06-26 969.90 973.31 950.79 952.27 1598400   952.27
+2017-06-27 942.46 948.29 926.85 927.33 2579900   927.33
+
+NOTE: Log Print Time:  2022-06-19 00:00:47
+NOTE: Elapsed Time: 0.00299215316772461 secs
+
+correlation analysis...
+
+NOTE: Log Print Time:  2022-06-19 00:00:47
+NOTE: Elapsed Time: 0.05035400390625 secs
+
+             High        Low      Close     Volume
+High    1.0000000  0.9995638  0.9996465 -0.1972512
+Low     0.9995638  1.0000000  0.9996900 -0.2143598
+Close   0.9996465  0.9996900  1.0000000 -0.2072625
+Volume -0.1972512 -0.2143598 -0.2072625  1.0000000
+
+NOTE: Log Print Time:  2022-06-19 00:00:47
+NOTE: Elapsed Time: 0.00199699401855469 secs
+
+added features...
+
+NOTE: Log Print Time:  2022-06-19 00:00:47
+NOTE: Elapsed Time: 0.0588409900665283 secs
+
+            Volume dn mavg up
+2017-06-20 1126000 NA   NA NA
+2017-06-21 1202200 NA   NA NA
+2017-06-22  941400 NA   NA NA
+2017-06-23 1527900 NA   NA NA
+2017-06-26 1598400 NA   NA NA
+2017-06-27 2579900 NA   NA NA
+
+NOTE: Data frame has 6 rows and 4 columns.
+
+NOTE: Log Print Time:  2022-06-19 00:00:47
+NOTE: Elapsed Time: 0.00402092933654785 secs
+
+Error in loadNamespace(x) : there is no package called ‘outlieR’
+
+Traceback:
+10: stop(cond)
+9: doWithOneRestart(return(expr), restart)
+8: withOneRestart(expr, restarts[[1L]])
+7: withRestarts(stop(cond), retry_loadNamespace = function() NULL)
+6: loadNamespace(x)
+5: data %>% outlieR::impute(flag = NULL, fill = "mean", level = 0.1, 
+       nmax = NULL, side = NULL, crit = "lof", k = 5, metric = "euclidean", 
+       q = 3) at preprocess_data.r#8
+4: eval(ei, envir)
+3: eval(ei, envir)
+2: withVisible(eval(ei, envir))
+1: source("scripts/preprocess_data.r")
+
+NOTE: Log Print Time:  2022-06-19 00:00:49
+NOTE: Elapsed Time: 1.9437460899353 secs
+
+target creation....
+
+NOTE: Log Print Time:  2022-06-19 00:00:49
+NOTE: Elapsed Time: 0.0285189151763916 secs
+
+      bb_low      bb_avg     bb_high target
+2  0.1422687  0.66368420  1.18647147   sell
+3  0.4904131  0.17236978  1.05090153    buy
+4 -0.4400472  0.37715066  0.74449028   sell
+5 -0.6545663  4.60085158 -0.04621561    buy
+6 -0.5060097 -0.01282121  1.02168905    buy
+7  1.1160795 -0.60573213 -0.39207035    buy
+
+NOTE: Data frame has 6 rows and 4 columns.
+
+NOTE: Log Print Time:  2022-06-19 00:00:49
+NOTE: Elapsed Time: 0.00599193572998047 secs
+
+split data....
+
+NOTE: Log Print Time:  2022-06-19 00:00:49
+NOTE: Elapsed Time: 0.00597906112670898 secs
+
+      bb_low     bb_avg     bb_high target
+2  0.1422687  0.6636842  1.18647147   sell
+3  0.4904131  0.1723698  1.05090153    buy
+4 -0.4400472  0.3771507  0.74449028   sell
+5 -0.6545663  4.6008516 -0.04621561    buy
+7  1.1160795 -0.6057321 -0.39207035    buy
+8  0.5472446 -0.8757586 -1.30444509    buy
+
+NOTE: Data frame has 6 rows and 4 columns.
+
+NOTE: Log Print Time:  2022-06-19 00:00:49
+NOTE: Elapsed Time: 0.00299191474914551 secs
+
+       bb_low      bb_avg    bb_high target
+6  -0.5060097 -0.01282121  1.0216890    buy
+10 -0.6698870 -0.82123669 -0.6492034   sell
+25 -0.2087356  0.51091766  0.6381624    buy
+28 -1.2513842  0.91316924  1.5763872    buy
+34 -1.4699061  0.54912153  1.3055668   sell
+38 -1.5238395  0.54609973  1.3292541    buy
+
+NOTE: Data frame has 6 rows and 4 columns.
+
+NOTE: Log Print Time:  2022-06-19 00:00:49
+NOTE: Elapsed Time: 0.0029909610748291 secs
+
+train/test decision tree....
+
+NOTE: Log Print Time:  2022-06-19 00:00:50
+NOTE: Elapsed Time: 0.668934106826782 secs
+
+Confusion Matrix and Statistics
+
+          Reference
+Prediction buy sell
+      buy   21   35
+      sell  99   96
+                                          
+               Accuracy : 0.4661          
+                 95% CI : (0.4032, 0.5299)
+    No Information Rate : 0.5219          
+    P-Value [Acc > NIR] : 0.9665          
+                                          
+                  Kappa : -0.0943         
+                                          
+ Mcnemar's Test P-Value : 5.258e-08       
+                                          
+              Precision : 0.37500         
+                 Recall : 0.17500         
+                     F1 : 0.23864         
+             Prevalence : 0.47809         
+         Detection Rate : 0.08367         
+   Detection Prevalence : 0.22311         
+      Balanced Accuracy : 0.45391         
+                                          
+       'Positive' Class : buy             
+                                          
+
+NOTE: Log Print Time:  2022-06-19 00:00:50
+NOTE: Elapsed Time: 0.0079810619354248 secs
+
+rpart variable importance
+
+        Overall
+bb_high  11.299
+bb_low   10.662
+bb_avg    7.633
+
+NOTE: Log Print Time:  2022-06-19 00:00:50
+NOTE: Elapsed Time: 0.0139608383178711 secs
+
+train/test random forest....
+
+NOTE: Log Print Time:  2022-06-19 00:00:58
+NOTE: Elapsed Time: 8.33258104324341 secs
+
+Confusion Matrix and Statistics
+
+          Reference
+Prediction buy sell
+      buy   46   84
+      sell  74   47
+                                          
+               Accuracy : 0.3705          
+                 95% CI : (0.3106, 0.4335)
+    No Information Rate : 0.5219          
+    P-Value [Acc > NIR] : 1.000           
+                                          
+                  Kappa : -0.257          
+                                          
+ Mcnemar's Test P-Value : 0.474           
+                                          
+              Precision : 0.3538          
+                 Recall : 0.3833          
+                     F1 : 0.3680          
+             Prevalence : 0.4781          
+         Detection Rate : 0.1833          
+   Detection Prevalence : 0.5179          
+      Balanced Accuracy : 0.3711          
+                                          
+       'Positive' Class : buy             
+                                          
+
+NOTE: Log Print Time:  2022-06-19 00:00:58
+NOTE: Elapsed Time: 0.00502395629882812 secs
+
+rf variable importance
+
+        Overall
+bb_low    184.2
+bb_high   160.3
+bb_avg    157.1
+
+NOTE: Log Print Time:  2022-06-19 00:00:58
+NOTE: Elapsed Time: 0.00295519828796387 secs
+
+train/test random forest....
+
+NOTE: Log Print Time:  2022-06-19 00:01:33
+NOTE: Elapsed Time: 35.2490019798279 secs
+
+Confusion Matrix and Statistics
+
+          Reference
+Prediction buy sell
+      buy   46   85
+      sell  74   46
+                                          
+               Accuracy : 0.3665          
+                 95% CI : (0.3068, 0.4294)
+    No Information Rate : 0.5219          
+    P-Value [Acc > NIR] : 1.0000          
+                                          
+                  Kappa : -0.2645         
+                                          
+ Mcnemar's Test P-Value : 0.4277          
+                                          
+              Precision : 0.3511          
+                 Recall : 0.3833          
+                     F1 : 0.3665          
+             Prevalence : 0.4781          
+         Detection Rate : 0.1833          
+   Detection Prevalence : 0.5219          
+      Balanced Accuracy : 0.3672          
+                                          
+       'Positive' Class : buy             
+                                          
+
+NOTE: Log Print Time:  2022-06-19 00:01:33
+NOTE: Elapsed Time: 0.00495100021362305 secs
+
+rf variable importance
+
+        Overall
+bb_low    184.2
+bb_high   160.3
+bb_avg    157.1
+
+NOTE: Log Print Time:  2022-06-19 00:01:33
+NOTE: Elapsed Time: 0.00399279594421387 secs
+
