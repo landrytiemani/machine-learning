@@ -15,7 +15,7 @@ This repository showcases my work during my Data Science graduate studies, focus
   - Scatterplot
   - Density plot
   - ect...
-  - Statistic Summaries   
+  - Statistical Summaries   
 - **Machine Learning:**
   - Decision Trees
   - Random Forests (RF)
